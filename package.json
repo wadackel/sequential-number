@@ -1,0 +1,21 @@
+{
+  "name": "sequential-number",
+  "main": "./lib/sequential-number",
+  "version": "0.0.0",
+  "description": "__TODO__",
+  "keywords": [],
+  "activationCommands": {
+    "atom-workspace": "sequential-number:open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsuyoshiwada/sequential-number"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+    "event-kit": "^1.4.1"
+  }
+}

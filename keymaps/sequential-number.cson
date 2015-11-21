@@ -1,0 +1,6 @@
+'atom-workspace':
+  'ctrl-alt-0': 'sequential-number:open'
+
+'.sequential-number atom-text-editor':
+  'escape': 'sequential-number:close'
+  'ctrl-c': 'sequential-number:close'

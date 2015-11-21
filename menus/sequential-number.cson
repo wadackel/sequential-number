@@ -1,0 +1,21 @@
+'context-menu':
+  'atom-text-editor': [
+    {
+      'label': 'Open Sequential Number'
+      'command': 'sequential-number:open'
+    }
+  ]
+'menu': [
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'Sequential Number'
+      'submenu': [
+        {
+          'label': 'Open Sequential Number'
+          'command': 'sequential-number:open'
+        }
+      ]
+    ]
+  }
+]
