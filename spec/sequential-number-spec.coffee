@@ -1,62 +1,182 @@
-SequentialNumber = require '../lib/sequential-number'
-
-# Use the command `window:run-package-specs` (cmd-alt-ctrl-p) to run specs.
-#
-# To run a specific `it` or `describe` block add an `f` to the front (e.g. `fit`
-# or `fdescribe`). Remove the `f` to unfocus the block.
+SequentialNumber = require "../lib/sequential-number"
 
 describe "SequentialNumber", ->
-  [workspaceElement, activationPromise] = []
+  [workspaceElement, pane, element, panel] = []
 
   beforeEach ->
     workspaceElement = atom.views.getView(atom.workspace)
-    activationPromise = atom.packages.activatePackage('sequential-number')
+    activationPromise = null
 
-  describe "when the sequential-number:toggle event is triggered", ->
-    it "hides and shows the modal panel", ->
-      # Before the activation event the view is not on the DOM, and no panel
-      # has been created
-      expect(workspaceElement.querySelector('.sequential-number')).not.toExist()
+    jasmine.attachToDOM(workspaceElement)
 
-      # This is an activation event, triggering it will cause the package to be
-      # activated.
-      atom.commands.dispatch workspaceElement, 'sequential-number:toggle'
+    waitsForPromise ->
+      atom.workspace.open "test.txt"
 
-      waitsForPromise ->
-        activationPromise
+    runs ->
+      activationPromise = atom.packages.activatePackage "sequential-number"
+      pane = atom.workspace.getActivePaneItem()
+      pane.setText Array(5).join "\n"
+      pane.setCursorBufferPosition [0, 0]
+      atom.commands.dispatch workspaceElement, "sequential-number:open"
 
-      runs ->
-        expect(workspaceElement.querySelector('.sequential-number')).toExist()
+    waitsForPromise ->
+      activationPromise
 
-        sequentialNumberElement = workspaceElement.querySelector('.sequential-number')
-        expect(sequentialNumberElement).toExist()
+    runs ->
+      element = workspaceElement.querySelector ".sequential-number"
+      panel = atom.workspace.panelForItem(element)
 
-        sequentialNumberPanel = atom.workspace.panelForItem(sequentialNumberElement)
-        expect(sequentialNumberPanel.isVisible()).toBe true
-        atom.commands.dispatch workspaceElement, 'sequential-number:toggle'
-        expect(sequentialNumberPanel.isVisible()).toBe false
+  describe "when the sequential-number:open event is triggered", ->
+    it "show the modal panel", ->
+      expect(panel.isVisible()).toBe true
 
-    it "hides and shows the view", ->
-      # This test shows you an integration test testing at the view level.
+    it "hide the modal panel", ->
+      atom.commands.dispatch element, "sequential-number:close"
+      expect(panel.isVisible()).toBe false
 
-      # Attaching the workspaceElement to the DOM is required to allow the
-      # `toBeVisible()` matchers to work. Anything testing visibility or focus
-      # requires that the workspaceElement is on the DOM. Tests that attach the
-      # workspaceElement to the DOM are generally slower than those off DOM.
-      jasmine.attachToDOM(workspaceElement)
+    it "clears the previous editor text", ->
+      model = panel.getItem().querySelector("atom-text-editor").getModel()
+      model.setText "Sequential Number!!"
+      expect(model.getText()).toBe "Sequential Number!!"
 
-      expect(workspaceElement.querySelector('.sequential-number')).not.toExist()
+      atom.commands.dispatch element, "sequential-number:close"
+      atom.commands.dispatch element, "sequential-number:open"
+      expect(model.getText()).toBe ""
 
-      # This is an activation event, triggering it causes the package to be
-      # activated.
-      atom.commands.dispatch workspaceElement, 'sequential-number:toggle'
+  describe "when the text is entered", ->
+    [editor, model, previousText] = []
 
-      waitsForPromise ->
-        activationPromise
+    beforeEach ->
+      pane.addCursorAtScreenPosition [1, 0]
+      pane.addCursorAtScreenPosition [2, 0]
+      pane.addCursorAtScreenPosition [3, 0]
+      pane.addCursorAtScreenPosition [4, 0]
+      pane.addCursorAtScreenPosition [5, 0]
+      editor = panel.getItem().querySelector "atom-text-editor"
+      model = editor.getModel()
+      previousText = pane.getText()
 
-      runs ->
-        # Now we can test for view visibility
-        sequentialNumberElement = workspaceElement.querySelector('.sequential-number')
-        expect(sequentialNumberElement).toBeVisible()
-        atom.commands.dispatch workspaceElement, 'sequential-number:toggle'
-        expect(sequentialNumberElement).not.toBeVisible()
+    modelTextToEnter = (text) ->
+      model.setText(text)
+      e = document.createEvent "HTMLEvents"
+      e.initEvent "keyup", true, true
+      e.keyCode = 13
+      editor.dispatchEvent e
+      return pane.getText()
+
+    expectModelUndoToOriginal = ->
+      pane.undo()
+      expect(pane.getText()).toBe previousText
+
+
+    it "does not change if the invalid value", ->
+      expect(modelTextToEnter("")).toBe previousText
+      expect(modelTextToEnter("--0011")).toBe previousText
+      expect(modelTextToEnter("++1")).toBe previousText
+      expect(modelTextToEnter("+1/")).toBe previousText
+      expect(modelTextToEnter("1%1")).toBe previousText
+      expect(modelTextToEnter("-2+++")).toBe previousText
+      expect(modelTextToEnter("+34hoge")).toBe previousText
+      expect(modelTextToEnter("alphabet")).toBe previousText
+
+    describe "addition", ->
+      it "syntax of the '0'", ->
+        expect(modelTextToEnter("0")).toBe """
+        0
+        1
+        2
+        3
+        4
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '1'", ->
+        expect(modelTextToEnter("1")).toBe """
+        1
+        2
+        3
+        4
+        5
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '1 + 2'", ->
+        expect(modelTextToEnter("1 + 2")).toBe """
+        1
+        3
+        5
+        7
+        9
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '5++'", ->
+        expect(modelTextToEnter("5++")).toBe """
+        5
+        6
+        7
+        8
+        9
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '015 + 1'", ->
+        expect(modelTextToEnter("015 + 1")).toBe """
+        015
+        016
+        017
+        018
+        019
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '-20+12'", ->
+        expect(modelTextToEnter("-20+12")).toBe """
+        -20
+        -8
+        4
+        16
+        28
+        """
+        expectModelUndoToOriginal()
+
+    describe "subtraction", ->
+      it "syntax of the '10 - 3'", ->
+        expect(modelTextToEnter("10 - 3")).toBe """
+        10
+        7
+        4
+        1
+        -2
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '15--'", ->
+        expect(modelTextToEnter("15--")).toBe """
+        15
+        14
+        13
+        12
+        11
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '0020 - 2'", ->
+        expect(modelTextToEnter("0020 - 2")).toBe """
+        0020
+        0018
+        0016
+        0014
+        0012
+        """
+        expectModelUndoToOriginal()
+
+      it "syntax of the '-003120 - 21", ->
+        expect(modelTextToEnter("-003120 - 21")).toBe """
+        -003120
+        -003141
+        -003162
+        -003183
+        -003204
+        """
+        expectModelUndoToOriginal()

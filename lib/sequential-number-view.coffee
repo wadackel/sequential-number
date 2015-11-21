@@ -28,16 +28,24 @@ class SequentialNumberView extends Emitter
 
   handleKeyup: (e) ->
     if e.keyCode == 13
-      @emit "done", @textEditor.getModel().getText().trim()
+      @emit "done", @getText()
 
   show: ->
     @modalPanel.show()
-    @textEditor.getModel().setText ""
     @textEditor.focus()
 
   hide: ->
     @modalPanel.hide()
+    @setText("")
 
   destroy: ->
     @modalPanel.destroy()
+    @modalPanel = null
     @element.remove()
+    @element = null
+
+  setText: (text) ->
+    @textEditor.getModel().setText text
+
+  getText: ->
+    @textEditor.getModel().getText().trim()

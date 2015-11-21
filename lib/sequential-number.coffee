@@ -2,12 +2,10 @@
 SequentialNumberView = require "./sequential-number-view"
 
 module.exports = SequentialNumber =
-  activate: (state) ->
-    @view = new SequentialNumberView state.viewState
+  activate: () ->
+    @view = new SequentialNumberView
     @view.on "blur", => @close()
     @view.on "done", (value) => @exec(value)
-
-    console.log "activate"
 
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add "atom-workspace", "sequential-number:open": => @open()
@@ -18,7 +16,6 @@ module.exports = SequentialNumber =
     @view.destroy()
 
   serialize: ->
-    viewState: @viewState.serialize()
 
   open: ->
     @view.show()
@@ -41,11 +38,12 @@ module.exports = SequentialNumber =
     @close()
 
   parseValue: (input) ->
-    matches = "#{input}".match /^(\d+)\s*([+-]|(?:\+\+|\-\-))?\s*(\d+)?$/
+    matches = "#{input}".match /^([+\-]?\d+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?$/
     return null if matches == null
 
     start = parseInt matches[1], 10
-    digit = if /^[1-9]+|0$/.test matches[1] then 0 else matches[1].length
+    digit = if "#{start}" == matches[1] then 0 else matches[1].length
+    digit = if /^[+\-]/.test matches[1] then Math.max(digit - 1, 0) else digit
     operator = matches[2] || "+"
     step = parseInt matches[3], 10
     step = if isNaN matches[3] then 1 else step
@@ -62,4 +60,6 @@ module.exports = SequentialNumber =
     return if isNaN value then "" else @zeroPadding value, digit
 
   zeroPadding: (number, digit = 1) ->
-    return (Array(digit).join("0") + number).slice -digit
+    positive = parseInt(number, 10) >= 0
+    num = Math.abs number
+    return (if positive then "" else "-") + (Array(digit).join("0") + num).slice -digit
