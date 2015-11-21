@@ -2,8 +2,13 @@
   "name": "sequential-number",
   "main": "./lib/sequential-number",
   "version": "0.0.0",
-  "description": "__TODO__",
-  "keywords": [],
+  "description": "Input sequential number in the across multiple cursors.",
+  "keywords": [
+    "serial number",
+    "sequence number",
+    "numbering",
+    "text helper"
+  ],
   "activationCommands": {
     "atom-workspace": "sequential-number:open"
   },
