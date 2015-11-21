@@ -180,3 +180,13 @@ describe "SequentialNumber", ->
         -003204
         """
         expectModelUndoToOriginal()
+
+      it "syntax of the '-10 + 1 : 2", ->
+        expect(modelTextToEnter("-10 + 1 : 2")).toBe """
+        -10
+        -09
+        -08
+        -07
+        -06
+        """
+        expectModelUndoToOriginal()
