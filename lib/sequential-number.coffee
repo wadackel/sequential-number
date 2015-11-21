@@ -27,26 +27,28 @@ module.exports = SequentialNumber =
   exec: (value) ->
     editor = atom.workspace.getActivePane().activeItem
     result = @parseValue value
-    return if result == null
 
-    editor.transact( =>
-      for cursor, index in editor.cursors
-        point = cursor.getBufferPosition()
-        editor.setTextInBufferRange new Range(point, point), @calculateValue index, result
-    )
+    if result != null
+      editor.transact( =>
+        for cursor, index in editor.cursors
+          point = cursor.getBufferPosition()
+          editor.setTextInBufferRange new Range(point, point), @calculateValue index, result
+      )
 
     @close()
 
   parseValue: (input) ->
-    matches = "#{input}".match /^([+\-]?\d+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?$/
+    matches = "#{input}".match /^([+\-]?\d+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?\s*(?:\:\s*(\d+))?$/
     return null if matches == null
 
     start = parseInt matches[1], 10
-    digit = if "#{start}" == matches[1] then 0 else matches[1].length
-    digit = if /^[+\-]/.test matches[1] then Math.max(digit - 1, 0) else digit
     operator = matches[2] || "+"
     step = parseInt matches[3], 10
     step = if isNaN matches[3] then 1 else step
+    _digit = parseInt matches[4], 10
+    digit = if "#{start}" == matches[1] then 0 else matches[1].length
+    digit = if /^[+\-]/.test matches[1] then Math.max(digit - 1, 0) else digit
+    digit = if isNaN _digit then digit else _digit
 
     return {start, digit, operator, step, input}
 
