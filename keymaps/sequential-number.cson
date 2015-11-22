@@ -1,4 +1,4 @@
-'atom-workspace':
+'atom-text-editor':
   'ctrl-alt-0': 'sequential-number:open'
 
 '.sequential-number atom-text-editor':
