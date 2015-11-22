@@ -105,7 +105,7 @@ May be overriden for your favorite keystroke in your `keymap.cson`.
 
 ```coffeescript
 # Open input panel
-'atom-workspace':
+'atom-text-editor':
   'ctrl-alt-0': 'sequential-number:open'
 
 # Close input panel
@@ -113,11 +113,6 @@ May be overriden for your favorite keystroke in your `keymap.cson`.
   'escape': 'sequential-number:close'
   'ctrl-c': 'sequential-number:close'
 ```
-
-
-
-## TODO
-* View real time preview in the panel.
 
 
 
