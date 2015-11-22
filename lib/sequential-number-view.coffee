@@ -2,7 +2,15 @@
 TemplateHelper = require "./template-helper"
 
 modalTemplate = """
-<atom-text-editor placeholder-text="example) 0001 + 2" mini></atom-text-editor>
+<div class="padded">
+  <atom-text-editor placeholder-text="example) 01 + 2" mini></atom-text-editor>
+  <div class="inset-panel">
+    <div class="padded">
+      <span class="icon icon-terminal"></span>
+      <span id="sequential-number-simulator"></span>
+    </div>
+  </div>
+</div>
 """
 
 module.exports =
@@ -19,6 +27,9 @@ class SequentialNumberView extends Emitter
     @textEditor = @element.querySelector "atom-text-editor"
     @textEditor.addEventListener "blur", => @handleBlur()
     @textEditor.addEventListener "keyup", (e) => @handleKeyup(e)
+
+    @simulator = @element.querySelector "#sequential-number-simulator"
+
     @modalPanel = atom.workspace.addModalPanel item: @element, visible: false
 
   serialize: ->
@@ -27,8 +38,14 @@ class SequentialNumberView extends Emitter
     @emit "blur"
 
   handleKeyup: (e) ->
+    text = @getText()
     if e.keyCode == 13
-      @emit "done", @getText()
+      @emit "done", text
+    else
+      @emit "change", text
+
+  isVisible: ->
+    @modalPanel.isVisible()
 
   show: ->
     @modalPanel.show()
@@ -36,7 +53,8 @@ class SequentialNumberView extends Emitter
 
   hide: ->
     @modalPanel.hide()
-    @setText("")
+    @setText ""
+    @setSimulatorText ""
 
   destroy: ->
     @modalPanel.destroy()
@@ -49,3 +67,9 @@ class SequentialNumberView extends Emitter
 
   getText: ->
     @textEditor.getModel().getText().trim()
+
+  setSimulatorText: (text) ->
+    @simulator.textContent = text
+
+  getSimulatorText: ->
+    @simulator.textContent

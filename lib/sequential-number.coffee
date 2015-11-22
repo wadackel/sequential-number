@@ -1,11 +1,16 @@
 {CompositeDisposable, Range} = require "atom"
 SequentialNumberView = require "./sequential-number-view"
 
+SIMULATE_CURSOR_LENGTH = 3
+
 module.exports = SequentialNumber =
   activate: () ->
     @view = new SequentialNumberView
     @view.on "blur", => @close()
-    @view.on "done", (value) => @exec(value)
+    @view.on "change", (value) => @simulate value
+    @view.on "done", (value) => @exec value
+
+    @previousFocused
 
     @subscriptions = new CompositeDisposable
     @subscriptions.add atom.commands.add "atom-workspace", "sequential-number:open": => @open()
@@ -18,24 +23,43 @@ module.exports = SequentialNumber =
   serialize: ->
 
   open: ->
-    @view.show()
+    if !@view.isVisible()
+      @view.show()
 
   close: ->
     @view.hide()
     atom.views.getView(atom.workspace).focus()
 
+  simulate: (value) ->
+    result = @parseValue value
+    text = ""
+
+    if result != null
+      simulateList = [0..SIMULATE_CURSOR_LENGTH - 1].map (index) =>
+        @calculateValue index, result
+      simulateList.push "..."
+      text = simulateList.join ", "
+
+    @view.setSimulatorText text
+
   exec: (value) ->
-    editor = atom.workspace.getActivePane().activeItem
+    editor = @getEditor()
     result = @parseValue value
 
     if result != null
       editor.transact( =>
-        for cursor, index in editor.cursors
-          point = cursor.getBufferPosition()
+        cursors = editor.cursors.slice()
+        cursors = cursors.map (cursor) -> cursor.getBufferPosition()
+        cursors = cursors.sort (a, b) -> a.row - b.row || a.column - b.column
+
+        for point, index in cursors
           editor.setTextInBufferRange new Range(point, point), @calculateValue index, result
       )
 
     @close()
+
+  getEditor: ->
+    atom.workspace.getActivePane().activeItem
 
   parseValue: (input) ->
     matches = "#{input}".match /^([+\-]?\d+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?\s*(?:\:\s*(\d+))?$/
@@ -61,7 +85,8 @@ module.exports = SequentialNumber =
       else return ""
     return if isNaN value then "" else @zeroPadding value, digit
 
-  zeroPadding: (number, digit = 1) ->
+  zeroPadding: (number, digit = 0) ->
     positive = parseInt(number, 10) >= 0
     num = Math.abs number
-    return (if positive then "" else "-") + (Array(digit).join("0") + num).slice -digit
+    _digit = Math.max "#{num}".length, digit
+    return (if positive then "" else "-") + (Array(_digit).join("0") + num).slice -_digit
