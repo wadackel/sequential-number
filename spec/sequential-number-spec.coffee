@@ -1,6 +1,16 @@
 {Range, Point} = require "atom"
 SequentialNumber = require "../lib/sequential-number"
 
+
+# Event trigger utility
+trigger = (el, event, type, data = {}) ->
+  e = document.createEvent event
+  e.initEvent type, true, true
+  e = Object.assign e, data
+  el.dispatchEvent e
+
+
+# Package
 describe "SequentialNumber", ->
   [workspaceElement, pane, element, panel] = []
 
@@ -59,234 +69,204 @@ describe "SequentialNumber", ->
       model = editor.getModel()
       previousText = pane.getText()
 
-    modelTextToEnter = (text) ->
-      model.setText(text)
-
-      # Simulate the Right key
-      keyupEventRight = document.createEvent "HTMLEvents"
-      keyupEventRight.initEvent "keyup", true, true
-      keyupEventRight.keyCode = 39
-      editor.dispatchEvent keyupEventRight
-
-      simulate = simulator.textContent
-
-      # Simulate the Enter key
-      keyupEventEnter = document.createEvent "HTMLEvents"
-      keyupEventEnter.initEvent "keyup", true, true
-      keyupEventEnter.keyCode = 13
-      editor.dispatchEvent keyupEventEnter
-
-      return {
-        text: pane.getText()
-        simulate
-      }
-
     expectModelUndoToOriginal = ->
       pane.undo()
       expect(pane.getText()).toBe previousText
 
+    expectModalTextToEnter = (input, simulateExpected, expected, undo = false) ->
+      model.setText(input)
+
+      # Simulate the Right key
+      trigger editor, "HTMLEvents", "keyup", keyCode: 39
+      expect(simulator.textContent).toBe simulateExpected
+
+      # Simulate the Enter key
+      trigger editor, "HTMLEvents", "keyup", keyCode: 13
+      expect(pane.getText()).toBe expected
+
+      if undo
+        expectModelUndoToOriginal()
+
     it "does not change if the invalid value", ->
-      {text, simulate} = modelTextToEnter ""
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "--0011"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "++1"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "+1/"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "1%1"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "-2+++"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "+34hoge"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
-
-      {text, simulate} = modelTextToEnter "alphabet"
-      expect(text).toBe previousText
-      expect(simulate).toBe ""
+      expectModalTextToEnter "", "", previousText
+      expectModalTextToEnter "--0011", "", previousText
+      expectModalTextToEnter "++1", "", previousText
+      expectModalTextToEnter "+1/", "", previousText
+      expectModalTextToEnter "1%1", "", previousText
+      expectModalTextToEnter "1*2", "", previousText
+      expectModalTextToEnter "-2+++", "", previousText
+      expectModalTextToEnter "+34hoge", "", previousText
+      expectModalTextToEnter "alphabet", "", previousText
 
     describe "addition", ->
       it "syntax of the '0'", ->
-        {text, simulate} = modelTextToEnter "0"
-        expect(text).toBe """
+        expectModalTextToEnter "0",
+        "0, 1, 2, ...",
+        """
         0
         1
         2
         3
         4
-        """
-        expect(simulate).toBe "0, 1, 2, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '1'", ->
-        {text, simulate} = modelTextToEnter "1"
-        expect(text).toBe """
+        expectModalTextToEnter "1",
+        "1, 2, 3, ...",
+        """
         1
         2
         3
         4
         5
-        """
-        expect(simulate).toBe "1, 2, 3, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '1 + 2'", ->
-        {text, simulate} = modelTextToEnter "1 + 2"
-        expect(text).toBe """
+        expectModalTextToEnter "1 + 2",
+        "1, 3, 5, ...",
+        """
         1
         3
         5
         7
         9
-        """
-        expect(simulate).toBe "1, 3, 5, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '5++'", ->
-        {text, simulate} = modelTextToEnter "5++"
-        expect(text).toBe """
+        expectModalTextToEnter "5++",
+        "5, 6, 7, ...",
+        """
         5
         6
         7
         8
         9
-        """
-        expect(simulate).toBe "5, 6, 7, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '015 + 1'", ->
-        {text, simulate} = modelTextToEnter "015 + 1"
-        expect(text).toBe """
+        expectModalTextToEnter "015 + 1",
+        "015, 016, 017, ...",
+        """
         015
         016
         017
         018
         019
-        """
-        expect(simulate).toBe "015, 016, 017, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '09 + 65'", ->
-        {text, simulate} = modelTextToEnter "09 + 65"
-        expect(text).toBe """
+        expectModalTextToEnter "09 + 65",
+        "09, 74, 139, ...",
+        """
         09
         74
         139
         204
         269
-        """
-        expect(simulate).toBe "09, 74, 139, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '-20+12'", ->
-        {text, simulate} = modelTextToEnter "-20+12"
-        expect(text).toBe """
+        expectModalTextToEnter "-20+12",
+        "-20, -8, 4, ...",
+        """
         -20
         -8
         4
         16
         28
-        """
-        expect(simulate).toBe "-20, -8, 4, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '-10 + 1 : 2'", ->
-        {text, simulate} = modelTextToEnter "-10 + 1 : 2"
-        expect(text).toBe """
+        expectModalTextToEnter "-10 + 1 : 2",
+        "-10, -09, -08, ...",
+        """
         -10
         -09
         -08
         -07
         -06
-        """
-        expect(simulate).toBe "-10, -09, -08, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '-9 + 1000'", ->
-        {text, simulate} = modelTextToEnter "-9 + 1000 : 3"
-        expect(text).toBe """
+        expectModalTextToEnter "-9 + 1000 : 3",
+        "-009, 991, 1991, ...",
+        """
         -009
         991
         1991
         2991
         3991
-        """
-        expect(simulate).toBe "-009, 991, 1991, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
     describe "subtraction", ->
       it "syntax of the '10 - 3'", ->
-        {text, simulate} = modelTextToEnter "10 - 3"
-        expect(text).toBe """
+        expectModalTextToEnter "10 - 3",
+        "10, 7, 4, ...",
+        """
         10
         7
         4
         1
         -2
-        """
-        expect(simulate).toBe "10, 7, 4, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '15--'", ->
-        {text, simulate} = modelTextToEnter "15--"
-        expect(text).toBe """
+        expectModalTextToEnter "15--",
+        "15, 14, 13, ...",
+        """
         15
         14
         13
         12
         11
-        """
-        expect(simulate).toBe "15, 14, 13, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '0020 - 2'", ->
-        {text, simulate} = modelTextToEnter "0020 - 2"
-        expect(text).toBe """
+        expectModalTextToEnter "0020 - 2",
+        "0020, 0018, 0016, ...",
+        """
         0020
         0018
         0016
         0014
         0012
-        """
-        expect(simulate).toBe "0020, 0018, 0016, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '-003120 - 21'", ->
-        {text, simulate} = modelTextToEnter "-003120 - 21"
-        expect(text).toBe """
+        expectModalTextToEnter "-003120 - 21",
+        "-003120, -003141, -003162, ...",
+        """
         -003120
         -003141
         -003162
         -003183
         -003204
-        """
-        expect(simulate).toBe "-003120, -003141, -003162, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
       it "syntax of the '-8 - 90 : 3'", ->
-        {text, simulate} = modelTextToEnter "-8 - 90 : 2"
-        expect(text).toBe """
+        expectModalTextToEnter "-8 - 90 : 2",
+        "-08, -98, -188, ...",
+        """
         -08
         -98
         -188
         -278
         -368
-        """
-        expect(simulate).toBe "-08, -98, -188, ..."
-        expectModelUndoToOriginal()
+        """,
+        true
 
     describe "when the currently selected text", ->
       it "replace selected text", ->
@@ -301,19 +281,8 @@ describe "SequentialNumber", ->
 
         model.setText "01+1:3"
 
-        # Simulate the Right key
-        keyupEventRight = document.createEvent "HTMLEvents"
-        keyupEventRight.initEvent "keyup", true, true
-        keyupEventRight.keyCode = 39
-        editor.dispatchEvent keyupEventRight
-
-        simulate = simulator.textContent
-
         # Simulate the Enter key
-        keyupEventEnter = document.createEvent "HTMLEvents"
-        keyupEventEnter.initEvent "keyup", true, true
-        keyupEventEnter.keyCode = 13
-        editor.dispatchEvent keyupEventEnter
+        trigger editor, "HTMLEvents", "keyup", keyCode: 13
 
         expect(pane.getText()).toBe """
         001
