@@ -1,3 +1,4 @@
+{Range, Point} = require "atom"
 SequentialNumber = require "../lib/sequential-number"
 
 describe "SequentialNumber", ->
@@ -286,3 +287,38 @@ describe "SequentialNumber", ->
         """
         expect(simulate).toBe "-08, -98, -188, ..."
         expectModelUndoToOriginal()
+
+    describe "when the currently selected text", ->
+      it "replace selected text", ->
+        pane.insertText "Hello World!!"
+
+        # Select all of the "Hello World!!"
+        for cursor in pane.getCursors()
+          position = cursor.getBufferPosition()
+          startPoint = new Point position.row, 0
+          endPoint = new Point position.row, 13
+          cursor.selection.setBufferRange new Range startPoint, endPoint
+
+        model.setText "01+1:3"
+
+        # Simulate the Right key
+        keyupEventRight = document.createEvent "HTMLEvents"
+        keyupEventRight.initEvent "keyup", true, true
+        keyupEventRight.keyCode = 39
+        editor.dispatchEvent keyupEventRight
+
+        simulate = simulator.textContent
+
+        # Simulate the Enter key
+        keyupEventEnter = document.createEvent "HTMLEvents"
+        keyupEventEnter.initEvent "keyup", true, true
+        keyupEventEnter.keyCode = 13
+        editor.dispatchEvent keyupEventEnter
+
+        expect(pane.getText()).toBe """
+        001
+        002
+        003
+        004
+        005
+        """
