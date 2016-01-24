@@ -48,11 +48,12 @@ module.exports = SequentialNumber =
 
     if result != null
       editor.transact( =>
-        cursors = editor.cursors.slice()
-        cursors = cursors.map (cursor) -> cursor.selection.getBufferRange()
-        cursors = cursors.sort (a, b) -> a.start.row - b.start.row || a.start.column - b.start.column
-
-        for range, index in cursors
+        length = editor.cursors.length
+        for index in [0...length]
+          cursors = editor.cursors.slice()
+          cursors = cursors.map (cursor) -> cursor.selection.getBufferRange()
+          cursors = cursors.sort (a, b) -> a.start.row - b.start.row || a.start.column - b.start.column
+          range = cursors[index]
           editor.setTextInBufferRange new Range(range.start, range.end), @calculateValue index, result
       )
 

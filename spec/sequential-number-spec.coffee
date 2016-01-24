@@ -268,6 +268,23 @@ describe "SequentialNumber", ->
         """,
         true
 
+    describe "single line", ->
+      it "syntax of the '1 + 1 : 2'", ->
+        text = "test[] test[] test[]"
+        pane.setText text
+        pane.setCursorScreenPosition [0, 5]
+        pane.addCursorAtScreenPosition [0, 12]
+        pane.addCursorAtScreenPosition [0, 19]
+        expectModalTextToEnter "1 + 1 : 2",
+        "01, 02, 03, ...",
+        """
+        test[01] test[02] test[03]
+        """,
+        false
+
+        pane.undo()
+        expect(pane.getText()).toBe text
+
     describe "when the currently selected text", ->
       it "replace selected text", ->
         pane.insertText "Hello World!!"
