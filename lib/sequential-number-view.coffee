@@ -26,6 +26,8 @@ class SequentialNumberView extends Emitter
 
     @textEditor = @element.querySelector "atom-text-editor"
     @textEditor.addEventListener "blur", => @handleBlur()
+
+    # issue #3 fix
     setTimeout =>
       @textEditor.addEventListener "keyup", (e) => @handleKeyup(e)
     , 250
