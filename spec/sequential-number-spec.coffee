@@ -10,6 +10,13 @@ trigger = (el, event, type, data = {}) ->
   el.dispatchEvent e
 
 
+# setTimeout utility
+sleep = (msec) ->
+  new Promise((resolve) ->
+    setTimeout resolve, msec
+  )
+
+
 # Package
 describe "SequentialNumber", ->
   [workspaceElement, pane, element, panel] = []
@@ -18,6 +25,7 @@ describe "SequentialNumber", ->
     workspaceElement = atom.views.getView(atom.workspace)
     activationPromise = null
 
+    jasmine.useRealClock()
     jasmine.attachToDOM(workspaceElement)
 
     waitsForPromise ->
@@ -36,6 +44,9 @@ describe "SequentialNumber", ->
     runs ->
       element = workspaceElement.querySelector ".sequential-number"
       panel = atom.workspace.panelForItem(element)
+
+    waitsForPromise ->
+      sleep 250
 
   describe "when the sequential-number:open event is triggered", ->
     it "show the modal panel", ->
