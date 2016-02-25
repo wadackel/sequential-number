@@ -1,7 +1,7 @@
 {
   "name": "sequential-number",
   "main": "./lib/sequential-number",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Input sequential number in the across multiple cursors.",
   "keywords": [
     "serial number",
