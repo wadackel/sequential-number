@@ -21,7 +21,7 @@ Please restart as necessary After the installation.
 ### Syntax Rules
 
 ```
-<start> <operator> <step> : <digit>
+<start> <operator> <step> : <digit> : <radix>
 ```
 
 | Key                                   | Default | Definition                                                                                                                                      |
@@ -30,6 +30,7 @@ Please restart as necessary After the installation.
 | **operator** <small>(optinal)</small> | `+`     | It specifies the generation rules of consecutive numbers in the `+` or `-`. The sign of the increment(`++`) and decrement(`--`) also available. |
 | **step** <small>(optinal)</small>     | `1`     | It specifies the integer to be added or subtracted.                                                                                             |
 | **digit** <small>(optinal)</small>    | `0`     | It specifies of the number of digits in the integer.                                                                                            |
+| **radix** <small>(optinal)</small>    | `10`    | It specifies an integer between 2 and 36 that represents radix.                                                                                 |
 
 
 #### Examples
@@ -96,6 +97,30 @@ The following sample the cursor length is `5`.
 -08
 -07
 -06
+```
+
+```
+# Input
+=> 0ff + 14 : 3 : 16
+
+# Output
+0ff
+10d
+11b
+129
+137
+```
+
+```
+# Input
+=> 0AB239 + 2 : 6 : 16
+
+# Output
+0AB239
+0AB23B
+0AB23D
+0AB23F
+0AB241
 ```
 
 

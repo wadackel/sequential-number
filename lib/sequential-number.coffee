@@ -63,31 +63,47 @@ module.exports = SequentialNumber =
     atom.workspace.getActivePane().activeItem
 
   parseValue: (input) ->
-    matches = "#{input}".match /^([+\-]?\d+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?\s*(?:\:\s*(\d+))?$/
+    matches = "#{input}".match /^([+\-]?[\da-fA-F]+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?\s*(?:\:\s*(\d+))?\s*(?:\:\s*(\d+))?$/
     return null if matches == null
 
-    start = parseInt matches[1], 10
+    radix = if matches[5] != undefined then parseInt matches[5], 10 else 10
+
+    start = parseInt matches[1], radix
     operator = matches[2] || "+"
     step = parseInt matches[3], 10
     step = if isNaN matches[3] then 1 else step
+
     _digit = parseInt matches[4], 10
     digit = if "#{start}" == matches[1] then 0 else matches[1].length
     digit = if /^[+\-]/.test matches[1] then Math.max(digit - 1, 0) else digit
     digit = if isNaN _digit then digit else _digit
 
-    return {start, digit, operator, step, input}
+    return {start, digit, operator, step, radix, input}
 
-  calculateValue: (index, {start, digit, operator, step}) ->
+  calculateValue: (index, {start, digit, operator, step, radix, input}) ->
+    _start = parseInt start, 10
+
     switch operator
-      when "++" then value = start + index
-      when "--" then value = start - index
-      when "+" then value = start + (index * step)
-      when "-" then value = start - (index * step)
+      when "++" then value = _start + index
+      when "--" then value = _start - index
+      when "+" then value = _start + (index * step)
+      when "-" then value = _start - (index * step)
       else return ""
-    return if isNaN value then "" else @zeroPadding value, digit
 
-  zeroPadding: (number, digit = 0) ->
-    positive = parseInt(number, 10) >= 0
-    num = Math.abs number
-    _digit = Math.max "#{num}".length, digit
-    return (if positive then "" else "-") + (Array(_digit).join("0") + num).slice -_digit
+    if isNaN value
+      return ""
+
+    value = @zeroPadding value, digit, radix
+    firstAlpha = input.match /([a-fA-F])/
+
+    if firstAlpha
+      value = value[if firstAlpha[1] == firstAlpha[1].toLowerCase() then "toLowerCase" else "toUpperCase"]()
+
+    return value
+
+  zeroPadding: (number, digit = 0, radix = 10) ->
+    num = number.toString radix
+    numAbs = num.replace "-", ""
+    positive = num.indexOf("-") < 0
+    _digit = Math.max numAbs.length, digit
+    return (if positive then "" else "-") + (Array(_digit).join("0") + numAbs).slice(_digit * -1)
