@@ -279,6 +279,93 @@ describe "SequentialNumber", ->
         """,
         true
 
+    describe "radix = 2", ->
+      it "syntax of the '0 + 1 : 1 : 2'", ->
+        expectModalTextToEnter "0 + 1 : 1 : 2",
+        "0, 1, 10, ...",
+        """
+        0
+        1
+        10
+        11
+        100
+        """,
+        true
+
+      it "syntax of the '-11 - 2 : 2 : 2'", ->
+        expectModalTextToEnter "-11 - 2 : 2 : 2",
+        "-11, -101, -111, ...",
+        """
+        -11
+        -101
+        -111
+        -1001
+        -1011
+        """,
+        true
+
+    describe "radix = 8", ->
+      it "syntax of the '6 + 1 : 2 : 8'", ->
+        expectModalTextToEnter "6 + 1 : 2 : 8",
+        "06, 07, 10, ...",
+        """
+        06
+        07
+        10
+        11
+        12
+        """,
+        true
+
+      it "syntax of the '-5 - 5 : 2 : 8'", ->
+        expectModalTextToEnter "-5 - 5 : 2 : 8",
+        "-05, -12, -17, ...",
+        """
+        -05
+        -12
+        -17
+        -24
+        -31
+        """,
+        true
+
+    describe "radix = 16", ->
+      it "syntax of the 'a + 6 : 1 : 16'", ->
+        expectModalTextToEnter "a + 6 : 1 : 16",
+        "a, 10, 16, ...",
+        """
+        a
+        10
+        16
+        1c
+        22
+        """,
+        true
+
+      it "syntax of the 'C4b + 9 : 6 : 16'", ->
+        expectModalTextToEnter "C4b + 9 : 6 : 16",
+        "000C4B, 000C54, 000C5D, ...",
+        """
+        000C4B
+        000C54
+        000C5D
+        000C66
+        000C6F
+        """,
+        true
+
+      it "syntax of the 'b - 12 : 2 : 16'", ->
+        expectModalTextToEnter "b - 12 : 2 : 16",
+        "0b, -01, -0d, ...",
+        """
+        0b
+        -01
+        -0d
+        -19
+        -25
+        """,
+        true
+
     describe "single line", ->
       it "syntax of the '1 + 1 : 2'", ->
         text = "test[] test[] test[]"
