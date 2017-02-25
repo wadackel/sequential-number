@@ -366,6 +366,103 @@ describe "SequentialNumber", ->
         """,
         true
 
+    describe "radix = a", ->
+      it "syntax of the 'a++ : 1 : a'", ->
+        expectModalTextToEnter "a++ : 1 : a",
+        "a, b, c, ...",
+        """
+        a
+        b
+        c
+        d
+        e
+        """,
+        true
+
+      it "syntax of the 'a + 2 : 1 : a'", ->
+        expectModalTextToEnter "a + 2 : 1 : a",
+        "a, c, e, ...",
+        """
+        a
+        c
+        e
+        g
+        i
+        """,
+        true
+
+      it "syntax of the 'z + 3 : 1 : a'", ->
+        expectModalTextToEnter "z + 3 : 1 : a",
+        "z, ac, af, ...",
+        """
+        z
+        ac
+        af
+        ai
+        al
+        """,
+        true
+
+      it "syntax of the 'W + 2 : 1 : a'", ->
+        expectModalTextToEnter "W + 2 : 1 : a",
+        "W, Y, AA, ...",
+        """
+        W
+        Y
+        AA
+        AC
+        AE
+        """,
+        true
+
+      it "syntax of the 'w + 2 : 1 : A'", ->
+        expectModalTextToEnter "W + 2 : 1 : A",
+        "W, Y, AA, ...",
+        """
+        W
+        Y
+        AA
+        AC
+        AE
+        """,
+        true
+
+      it "syntax of the 'y + 2 : 3 : a'", ->
+        expectModalTextToEnter "y + 2 : 3 : a",
+        "aay, aaa, aac, ...",
+        """
+        aay
+        aaa
+        aac
+        aae
+        aag
+        """,
+        true
+
+      it "syntax of the 'e - 1 : 1 : a'", ->
+        expectModalTextToEnter "e - 1 : 1 : a",
+        "e, d, c, ...",
+        """
+        e
+        d
+        c
+        b
+        a
+        """,
+        true
+
+      it "syntax of the 'a - 2 : 1 : a'", ->
+        expectModalTextToEnter "a - 2 : 1 : a",
+        "a, , , ...",
+        """
+        a
+
+
+
+
+        """,
+        true
+
     describe "single line", ->
       it "syntax of the '1 + 1 : 2'", ->
         text = "test[] test[] test[]"
