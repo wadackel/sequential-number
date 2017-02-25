@@ -63,12 +63,19 @@ module.exports = SequentialNumber =
     atom.workspace.getActivePane().activeItem
 
   parseValue: (input) ->
-    matches = "#{input}".match /^([+\-]?[\da-fA-F]+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?\s*(?:\:\s*(\d+))?\s*(?:\:\s*(\d+))?$/
+    matches = "#{input}".match /^([+\-]?[\da-zA-Z]+(?:\.\d+)?)\s*([+\-]|(?:\+\+|\-\-))?\s*(\d+)?\s*(?:\:\s*(\d+))?\s*(?:\:\s*([\daA]+))?$/
     return null if matches == null
 
-    radix = if matches[5] != undefined then parseInt matches[5], 10 else 10
+    radix = matches[5]
+    radix = if radix != undefined then radix else 10
+    radix = if /\d+/.test radix then parseInt radix, 10 else radix
+    isAlphaRadix = /[aA]/.test radix
 
-    start = parseInt matches[1], radix
+    start = matches[1]
+    return null if isAlphaRadix and /\d+/.test(start)
+
+    start = if isAlphaRadix then start else parseInt(start, radix)
+
     operator = matches[2] || "+"
     step = parseInt matches[3], 10
     step = if isNaN matches[3] then 1 else step
@@ -80,7 +87,13 @@ module.exports = SequentialNumber =
 
     return {start, digit, operator, step, radix, input}
 
-  calculateValue: (index, {start, digit, operator, step, radix, input}) ->
+  calculateValue: (index, args) ->
+    if /[aA]/.test args.radix
+      return @calculateAlphaValue index, args
+    else
+      return @calculateNumberValue index, args
+
+  calculateNumberValue: (index, {start, digit, operator, step, radix, input}) ->
     _start = parseInt start, 10
 
     switch operator
@@ -101,9 +114,48 @@ module.exports = SequentialNumber =
 
     return value
 
+  calculateAlphaValue: (index, {start, digit, operator, step, radix, input}) ->
+    switch operator
+      when "++" then count = (index - 1) + step
+      when "--" then count = (index - 1) - step
+      when "+" then count = index * step
+      when "-" then count = index * step * -1
+
+    value = @alphaSequence(start.toLowerCase(), count)
+    value = @leftPadding(value, digit, "a")
+
+    if /[A-Z]/.test(start) or /[A-Z]/.test(radix)
+      value = value.toUpperCase()
+
+    return value
+
+  alphaSequence: (str, count) ->
+    return str if count == 0
+
+    alphabet = "abcdefghijklmnopqrstuvwxyz".split ""
+    last = str.slice -1
+    index = alphabet.indexOf last
+    n = Math.floor((index + count) / alphabet.length)
+    next = alphabet[(index + count) % alphabet.length]
+
+    return "" if !next
+
+    s = "#{str.slice(0, str.length - 1)}#{next}"
+
+    if n > 0
+      if s.length == 1 and index == alphabet.length - 1
+        s = "a#{s}"
+      else
+        s = "#{@alphaSequence(s.slice(0, s.length - 1), n)}#{next}"
+
+    return s
+
+  leftPadding: (str, digit, padString) ->
+    _digit = Math.max str.length, digit
+    return (Array(_digit).join(padString) + str).slice(_digit * -1)
+
   zeroPadding: (number, digit = 0, radix = 10) ->
     num = number.toString radix
     numAbs = num.replace "-", ""
     positive = num.indexOf("-") < 0
-    _digit = Math.max numAbs.length, digit
-    return (if positive then "" else "-") + (Array(_digit).join("0") + numAbs).slice(_digit * -1)
+    return (if positive then "" else "-") + @leftPadding(numAbs, digit, "0")
