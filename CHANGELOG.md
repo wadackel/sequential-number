@@ -1,3 +1,8 @@
+## 0.5.0 - Support alphabet radix
+
+* Support alphabet radix option. Idea from @flyinbutrs, thanks.
+
+
 ## 0.4.0 - Add `radix` option
 
 * Add radix option. Very nice idea from @flyinbutrs, thanks.
@@ -19,3 +24,4 @@
 ## 0.1.0 - First Release
 
 * Every feature added
+
